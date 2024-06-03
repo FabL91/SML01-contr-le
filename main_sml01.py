@@ -36,12 +36,20 @@ class MainWindow(QMainWindow):
             with open("donnees.txt", "r") as fichier:
                 json_data = fichier.read()
                 self.selected_values = json.loads(json_data)
-                print(self.selected_values)
-                
-                self.selected_values["combobox_value"] = self.ui.comboBox_PortDetect.currentText()
+                                
+                # Définir la valeur de la combobox à partir des données chargées
+                combobox_value = self.selected_values.get("combobox_value")
+                if combobox_value in visa_list:
+                    index = self.ui.comboBox_PortDetect.findText(combobox_value)
+                    if index != -1:
+                        self.ui.comboBox_PortDetect.setCurrentIndex(index)
+                else:
+                    print(f"La valeur '{combobox_value}' n'est pas dans la liste des ports.")
         
         except FileNotFoundError:
             print("Le fichier 'donnees.txt' n'a pas été trouvé.")
+
+        print(combobox_value)
 
     def handle_combobox_change(self, index):
         selected_value = self.ui.comboBox_PortDetect.currentText()
@@ -56,8 +64,6 @@ class MainWindow(QMainWindow):
         with open("donnees.txt", "w") as fichier:
             fichier.write(json_data)
         
-        print(json_data)  # Affichez le JSON (vous pouvez l'enregistrer dans un fichier si nécessaire)
-
 
 if __name__ == "__main__":
     app = QApplication()
