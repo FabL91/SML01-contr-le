@@ -1,4 +1,5 @@
 from RsInstrument import *
+#import RsInstrument as rsi
 
 instr = RsInstrument('ASRL4::INSTR', id_query=True, reset=False)
 idn = instr.query_str('*IDN?')

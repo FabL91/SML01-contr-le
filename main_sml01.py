@@ -4,12 +4,13 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from ui_main_sml import Ui_Form # import the class created with pyside6-uic
 import pyvisa
 import json
+import datetime
+from RsInstrument import *
 
 
 """listing des ports COM"""
 rm = pyvisa.ResourceManager()
 visa_list = rm.list_resources()
-
 
 
 class MainWindow(QMainWindow):
@@ -19,17 +20,14 @@ class MainWindow(QMainWindow):
         # add the features of Ui_MainWindow() with the setupUi method
         self.ui = Ui_Form()
         self.ui.setupUi(self) # the widgets defined in Ui_MainWindow() will be␣accessible via sel.ui
-    
+        
         # Créez un dictionnaire vide pour stocker les valeurs sélectionnées
         self.selected_values = {}
-
         self.ui.comboBox_PortDetect.addItems(visa_list)
 
         # Ajoutez un gestionnaire de signal pour la combobox
         self.ui.comboBox_PortDetect.currentIndexChanged.connect(self.handle_combobox_change)
         
-        # Ajoutez des éléments à la combobox (remplacez par vos valeurs)
-        #self.ui.comboBox_PortDetect.addItems(["Salut", "Hi", "Hej", "Hallo", "Saluton"])
         
         # Chargez les données à partir du fichier "donnees.txt" dans la combobox
         try:
@@ -49,13 +47,15 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             print("Le fichier 'donnees.txt' n'a pas été trouvé.")
 
-        print(combobox_value)
+        
 
     def handle_combobox_change(self, index):
         selected_value = self.ui.comboBox_PortDetect.currentText()
         
         # Mettez à jour le dictionnaire avec la nouvelle valeur
         self.selected_values["combobox_value"] = selected_value
+        
+        self.init_instrument()
         
         # Convertissez le dictionnaire en format JSON
         json_data = json.dumps(self.selected_values)
@@ -64,6 +64,21 @@ class MainWindow(QMainWindow):
         with open("donnees.txt", "w") as fichier:
             fichier.write(json_data)
         
+    def information(self, texte):
+        """permet d'ajouter le texte en entrée à la case
+        d'information de l'application"""
+        heure_courante = datetime.datetime.now().time().strftime("%H:%M:%S")
+        self.ui.information.setText(f"{heure_courante + ':'} {texte}")
+
+        # Initialisez l'objet RsInstrument
+    
+
+    def init_instrument(self):
+        """Initialisation de l'instrument"""
+        instr = RsInstrument(self.selected_values["combobox_value"], id_query=True, reset=False)
+        idn = instr.query_str('*IDN?')
+        self.information('Hello, I am: ' + idn)
+       
 
 if __name__ == "__main__":
     app = QApplication()
