@@ -7,7 +7,6 @@ import json
 import datetime
 from RsInstrument import *
 
-
 """listing des ports COM"""
 rm = pyvisa.ResourceManager()
 visa_list = rm.list_resources()
@@ -23,10 +22,15 @@ class MainWindow(QMainWindow):
         
         # Créez un dictionnaire vide pour stocker les valeurs sélectionnées
         self.selected_values = {}
+        
         self.ui.comboBox_PortDetect.addItems(visa_list)
 
         # Ajoutez un gestionnaire de signal pour la combobox
         self.ui.comboBox_PortDetect.currentIndexChanged.connect(self.handle_combobox_change)
+        # Ajout d'un gestionnaire de signal pour lire la féquence
+        self.ui.freq.textEdited.connect(self.lecture_freq)
+        # Ajout d'un gestionnaire de signal pour modifier la fréquence
+        self.ui.freq.textChanged.connect(self.modif_freq)
         
         
         # Chargez les données à partir du fichier "donnees.txt" dans la combobox
@@ -45,6 +49,7 @@ class MainWindow(QMainWindow):
                     print(f"La valeur '{combobox_value}' n'est pas dans la liste des ports.")
         
         except FileNotFoundError:
+            self.information("Le fichier 'donnees.txt' n'a pas été trouvé.")
             print("Le fichier 'donnees.txt' n'a pas été trouvé.")
 
         
@@ -55,7 +60,7 @@ class MainWindow(QMainWindow):
         # Mettez à jour le dictionnaire avec la nouvelle valeur
         self.selected_values["combobox_value"] = selected_value
         
-        self.init_instrument()
+        self.init_instrument() #Initialise l'instrument
         
         # Convertissez le dictionnaire en format JSON
         json_data = json.dumps(self.selected_values)
@@ -70,16 +75,52 @@ class MainWindow(QMainWindow):
         heure_courante = datetime.datetime.now().time().strftime("%H:%M:%S")
         self.ui.information.setText(f"{heure_courante + ':'} {texte}")
 
-        # Initialisez l'objet RsInstrument
-    
+            
 
-    def init_instrument(self):
+    def init_instrument(self):  # Initialisez l'objet RsInstrument
         """Initialisation de l'instrument"""
-        instr = RsInstrument(self.selected_values["combobox_value"], id_query=True, reset=False)
-        idn = instr.query_str('*IDN?')
-        self.information('Hello, I am: ' + idn)
-       
+        try: 
+            instr = RsInstrument(self.selected_values["combobox_value"], id_query=True, reset=False)
+            instr.visa_timeout = 3000
+            idn = instr.query_str('*IDN?')
+            self.information('Hello, I am: ' + idn)
+            freq = instr.query_str('FREQuency?')
+            print("Fréquence d'utilisation: " + freq)
+            self.lecture_freq(freq)
 
+        except ResourceError as e:
+            self.information(e.args[0])
+            self.information('Your instrument is probably OFF...')
+            # Exit now, no point of continuing
+
+        except StatusException as e:
+            # Instrument status error
+            self.information(e.args[0])
+            self.information('Nothing to see here, moving on...')
+
+        except TimeoutException as e:
+            # Timeout error
+            self.information(e.args[0])
+            self.information("ERREUR Problème de communication avec l'instrument")
+
+        except RsInstrException as e:
+            # RsInstrException is a base class for all the RsInstrument exceptions
+            self.information(e.args[0])
+            self.information('Some other RsInstrument error...')
+
+        
+
+    def lecture_freq(self, frequency_hz):
+        """Lecture de la fréquence du générateur"""
+        frequency_mhz = float(frequency_hz) / 1e6
+        self.ui.freq.setText(f'{frequency_mhz:.0f} MHz')
+        print(f'{frequency_mhz:.0f} MHz')
+
+    def modif_freq(self, frequency_mhz):
+        instr.write_str(f'FREQ {frequency_mhz}MHz')
+        print(f"Fréquence modifiée à : {frequency_mhz} MHz")
+           
+    
 if __name__ == "__main__":
     app = QApplication()
     window = MainWindow()

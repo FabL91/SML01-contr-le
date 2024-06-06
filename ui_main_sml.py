@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QSizePolicy, QTextEdit, QWidget)
+    QLineEdit, QSizePolicy, QTextEdit, QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -26,14 +26,14 @@ class Ui_Form(object):
         self.information = QTextEdit(Form)
         self.information.setObjectName(u"information")
         self.information.setGeometry(QRect(30, 190, 321, 61))
-        self.widget = QWidget(Form)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(40, 40, 331, 24))
-        self.horizontalLayout = QHBoxLayout(self.widget)
+        self.layoutWidget = QWidget(Form)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(40, 40, 331, 24))
+        self.horizontalLayout = QHBoxLayout(self.layoutWidget)
         self.horizontalLayout.setSpacing(5)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(7, 0, 0, 0)
-        self.label = QLabel(self.widget)
+        self.label = QLabel(self.layoutWidget)
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(0, 0))
         self.label.setMaximumSize(QSize(16777215, 16777215))
@@ -42,11 +42,31 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.label)
 
-        self.comboBox_PortDetect = QComboBox(self.widget)
+        self.comboBox_PortDetect = QComboBox(self.layoutWidget)
         self.comboBox_PortDetect.setObjectName(u"comboBox_PortDetect")
         self.comboBox_PortDetect.setMinimumSize(QSize(0, 0))
 
         self.horizontalLayout.addWidget(self.comboBox_PortDetect)
+
+        self.layoutWidget_1 = QWidget(Form)
+        self.layoutWidget_1.setObjectName(u"layoutWidget_1")
+        self.layoutWidget_1.setGeometry(QRect(40, 90, 223, 24))
+        self.horizontalLayout_1 = QHBoxLayout(self.layoutWidget_1)
+        self.horizontalLayout_1.setObjectName(u"horizontalLayout_1")
+        self.horizontalLayout_1.setContentsMargins(0, 0, 0, 0)
+        self.freq_label = QLabel(self.layoutWidget_1)
+        self.freq_label.setObjectName(u"freq_label")
+        font = QFont()
+        font.setPointSize(13)
+        font.setBold(True)
+        self.freq_label.setFont(font)
+
+        self.horizontalLayout_1.addWidget(self.freq_label)
+
+        self.freq = QLineEdit(self.layoutWidget_1)
+        self.freq.setObjectName(u"freq")
+
+        self.horizontalLayout_1.addWidget(self.freq)
 
 
         self.retranslateUi(Form)
@@ -65,5 +85,6 @@ class Ui_Form(object):
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:700;\">informations:</span></p></body></html>", None))
         self.label.setText(QCoreApplication.translate("Form", u"Port Com", None))
+        self.freq_label.setText(QCoreApplication.translate("Form", u"Fr\u00e9quence", None))
     # retranslateUi
 
