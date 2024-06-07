@@ -9,7 +9,7 @@ print('Hello, I am: ' + idn)
 freq = instr.query_str('FREQuency?')
 print("Fréquence d'utilisation: " + freq)
 
-instr.write_str('FREQ 82MHz')
+instr.write_str('FREQ 85MHz')
 
 instr.write_str('POW -1.6dBm')
 

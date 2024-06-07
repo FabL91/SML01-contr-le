@@ -22,15 +22,13 @@ class MainWindow(QMainWindow):
         
         # Créez un dictionnaire vide pour stocker les valeurs sélectionnées
         self.selected_values = {}
-        
+        self.instr = None  # Variable d'instance pour l'instrument
         self.ui.comboBox_PortDetect.addItems(visa_list)
 
         # Ajoutez un gestionnaire de signal pour la combobox
         self.ui.comboBox_PortDetect.currentIndexChanged.connect(self.handle_combobox_change)
-        # Ajout d'un gestionnaire de signal pour lire la féquence
-        self.ui.freq.textEdited.connect(self.lecture_freq)
         # Ajout d'un gestionnaire de signal pour modifier la fréquence
-        self.ui.freq.textChanged.connect(self.modif_freq)
+        self.ui.freq.returnPressed.connect(self.modif_freq)
         
         
         # Chargez les données à partir du fichier "donnees.txt" dans la combobox
@@ -80,11 +78,11 @@ class MainWindow(QMainWindow):
     def init_instrument(self):  # Initialisez l'objet RsInstrument
         """Initialisation de l'instrument"""
         try: 
-            instr = RsInstrument(self.selected_values["combobox_value"], id_query=True, reset=False)
-            instr.visa_timeout = 3000
-            idn = instr.query_str('*IDN?')
+            self.instr = RsInstrument(self.selected_values["combobox_value"], id_query=True, reset=False)
+            self.instr.visa_timeout = 3000
+            idn = self.instr.query_str('*IDN?')
             self.information('Hello, I am: ' + idn)
-            freq = instr.query_str('FREQuency?')
+            freq = self.instr.query_str('FREQuency?')
             print("Fréquence d'utilisation: " + freq)
             self.lecture_freq(freq)
 
@@ -112,13 +110,18 @@ class MainWindow(QMainWindow):
 
     def lecture_freq(self, frequency_hz):
         """Lecture de la fréquence du générateur"""
+        # Vérifie si frequency_hz contient "MHz"
+        if "MHz" in frequency_hz:
+            return  # Ne fait rien si "MHz" est déjà présent
+        
         frequency_mhz = float(frequency_hz) / 1e6
-        self.ui.freq.setText(f'{frequency_mhz:.0f} MHz')
-        print(f'{frequency_mhz:.0f} MHz')
+        self.ui.freq.setText(f'{frequency_mhz:.7f} MHz')
+        #print(f'{frequency_mhz:.0f} MHz')
 
-    def modif_freq(self, frequency_mhz):
-        instr.write_str(f'FREQ {frequency_mhz}MHz')
-        print(f"Fréquence modifiée à : {frequency_mhz} MHz")
+    def modif_freq(self):
+        frequency_mhz = self.ui.freq.text()
+        self.instr.write_str(f"FREQ {frequency_mhz}")
+        print(f"Fréquence modifiée à : {frequency_mhz}")
            
     
 if __name__ == "__main__":
