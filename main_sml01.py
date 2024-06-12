@@ -6,6 +6,7 @@ import pyvisa
 import json
 import datetime
 from RsInstrument import *
+import sys
 
 """listing des ports COM"""
 rm = pyvisa.ResourceManager()
@@ -16,20 +17,19 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        # add the features of Ui_MainWindow() with the setupUi method
-        self.ui = Ui_Form()
-        self.ui.setupUi(self) # the widgets defined in Ui_MainWindow() will be␣accessible via sel.ui
-        
-        # Créez un dictionnaire vide pour stocker les valeurs sélectionnées
-        self.selected_values = {}
-        self.instr = None  # Variable d'instance pour l'instrument
+
+        self.ui = Ui_Form()         # add the features of Ui_MainWindow() with the setupUi method
+        self.ui.setupUi(self)       # the widgets defined in Ui_MainWindow() will be␣accessible via sel.ui      
+        self.selected_values = {}   # Créez un dictionnaire vide pour stocker les valeurs sélectionnées
+        self.instr = None           # Variable d'instance pour l'instrument
         self.ui.comboBox_PortDetect.addItems(visa_list)
 
         # Ajoutez un gestionnaire de signal pour la combobox
         self.ui.comboBox_PortDetect.currentIndexChanged.connect(self.handle_combobox_change)
         # Ajout d'un gestionnaire de signal pour modifier la fréquence
         self.ui.freq.returnPressed.connect(self.modif_freq)
-        
+        # Ajout d'un gestionnaire de signal pour modifier la puissance
+        self.ui.puiss.returnPressed.connect(self.modif_puiss)
         
         # Chargez les données à partir du fichier "donnees.txt" dans la combobox
         try:
@@ -47,8 +47,14 @@ class MainWindow(QMainWindow):
                     print(f"La valeur '{combobox_value}' n'est pas dans la liste des ports.")
         
         except FileNotFoundError:
-            self.information("Le fichier 'donnees.txt' n'a pas été trouvé.")
-            print("Le fichier 'donnees.txt' n'a pas été trouvé.")
+            # Créer le fichier avec des données par défaut
+            default_data = {"combobox_value": ""  # ou une autre valeur par défaut appropriée
+            }
+            with open("donnees.txt", "w") as fichier:
+                json.dump(default_data, fichier)
+            
+            self.information("Le fichier 'donnees.txt' n'a pas été trouvé. création du fichier 'donnees.txt'")
+            print("Le fichier 'donnees.txt' n'a pas été trouvé.Création du fichier 'donnees.txt'")
 
         
 
@@ -85,6 +91,9 @@ class MainWindow(QMainWindow):
             freq = self.instr.query_str('FREQuency?')
             print("Fréquence d'utilisation: " + freq)
             self.lecture_freq(freq)
+            puiss = self.instr.query_str('POWer?')
+            print("Puissance d'utilisation: " + puiss)
+            self.lecture_puissance(puiss)
 
         except ResourceError as e:
             self.information(e.args[0])
@@ -111,21 +120,38 @@ class MainWindow(QMainWindow):
     def lecture_freq(self, frequency_hz):
         """Lecture de la fréquence du générateur"""
         # Vérifie si frequency_hz contient "MHz"
-        if "MHz" in frequency_hz:
-            return  # Ne fait rien si "MHz" est déjà présent
+        #if "MHz" in frequency_hz:
+           # return  # Ne fait rien si "MHz" est déjà présent
         
         frequency_mhz = float(frequency_hz) / 1e6
         self.ui.freq.setText(f'{frequency_mhz:.7f} MHz')
-        #print(f'{frequency_mhz:.0f} MHz')
-
+        
     def modif_freq(self):
+        """Modifie la fréquence du générateur"""
         frequency_mhz = self.ui.freq.text()
         self.instr.write_str(f"FREQ {frequency_mhz}")
         print(f"Fréquence modifiée à : {frequency_mhz}")
+
+    def lecture_puissance(self, puissance_dBm):
+        """lecture de la puissance du générateur"""
+        puissance = float(puissance_dBm)
+        self.ui.puiss.setText(f'{puissance:.1f}dBm')
+
+    def modif_puiss(self):
+        puissance_dBm = self.ui.puiss.text()
+        self.instr.write_str(f"POW {puissance_dBm}")
+        print(f"Fréquence modifiée à : {puissance_dBm}")
+
+    def closeEvent(self, event):
+        """Ferme la session de l'instrument"""
+        # Close the session
+        self.instr.close()
+        print("La fenêtre principale du programme a été fermée.")
+        event.accept()  # Vous pouvez aussi utiliser event.ignore() pour empêcher la fermeture
            
     
 if __name__ == "__main__":
     app = QApplication()
     window = MainWindow()
     window.show()
-    app.exec()
+    sys.exit(app.exec())
